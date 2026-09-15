@@ -17,7 +17,7 @@ The test suite uses Postman's built-in testing framework with automated assertio
 
 Before you begin, ensure you have the following installed:
 
-- **Node.js** (v24 or higher) - [Download](https://nodejs.org/)
+- **Node.js** (v22 or higher) - [Download](https://nodejs.org/)
 - **npm** (comes with Node.js)
 - **Git** (optional, for version control)
 
