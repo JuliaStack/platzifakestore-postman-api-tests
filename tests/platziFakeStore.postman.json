@@ -1,0 +1,933 @@
+{
+  "info": {
+    "_postman_id": "7fd88426-d3da-415e-a1b8-e097bd834484",
+    "name": "PlatziFakeStore",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "16969139"
+  },
+  "item": [
+    {
+      "name": "Login",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test(\"Response has access_token and refresh_token\", () => {",
+                  "    pm.expect(json).to.have.property(\"access_token\");",
+                  "    pm.expect(json.access_token).to.be.a(\"string\").and.to.not.be.empty;",
+                  "    pm.expect(json).to.have.property(\"refresh_token\");",
+                  "});",
+                  "// if response successfull set variables for later use",
+                  "if (pm.response.code === 201 && json.access_token && json.refresh_token) {",
+                  "    pm.collectionVariables.set(\"accessToken\", json.access_token);",
+                  "    pm.collectionVariables.set(\"refreshToken\", json.refresh_token);",
+                  "} else {",
+                  "    console.log(\"Failed to set variables\");",
+                  "}",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"john@mail.com\",\n    \"password\": \"changeme\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "Positive checks",
+          "item": [
+            {
+              "name": "AllProducts",
+              "event": [
+                {
+                  "script": {
+                    "exec": [""],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  },
+                  "listen": "prerequest"
+                },
+                {
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "",
+                      "pm.test('Response is an array and is not empty', () => {",
+                      "    pm.expect(json).to.be.an('array').that.is.not.empty;",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  },
+                  "listen": "test"
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "products"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "ProductById",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "",
+                      "pm.test('Id in response equals requestedId', ()=>{",
+                      "    const requestedId = Number(pm.request.url.path.at(-1));",
+                      "    pm.expect(json.id).to.eql(requestedId);",
+                      "})"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                },
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "exec": [
+                      "const uniqueSlug = `${Date.now()}`;",
+                      "",
+                      "pm.sendRequest({",
+                      "    url: pm.collectionVariables.get('baseUrl') + '/api/v1/products',",
+                      "    method: 'POST',",
+                      "    header: { 'Content-Type': 'application/json' },",
+                      "    body: {",
+                      "        mode: 'raw',",
+                      "        raw: JSON.stringify({",
+                      "            title: 'New Product ' + uniqueSlug,",
+                      "            slug: uniqueSlug,",
+                      "            price: 111,",
+                      "            description: 'A description for the new product',",
+                      "            categoryId: 1,",
+                      "            images: [",
+                      "                'https://placehold.co/600x400',",
+                      "                'https://image-1.co/600x400'",
+                      "            ]",
+                      "        })",
+                      "    }",
+                      "}, (err, response) => {",
+                      "    if (err) {",
+                      "        pm.execution.setNextRequest(null);",
+                      "        return;",
+                      "    }",
+                      "",
+                      "    const json = response.json();",
+                      "    if (response.code === 201 && typeof json.id === 'number') {",
+                      "        pm.collectionVariables.set('createdProductId', json.id);",
+                      "    } else {",
+                      "        pm.execution.setNextRequest(null);",
+                      "    }",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/{{createdProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "products", "{{createdProductId}}"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "ProductByTitle",
+              "event": [
+                {
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "",
+                      "pm.test('Every title contains requestedTitle', () => {",
+                      "    const requestedTitle = pm.request.url.query.get('title');",
+                      "    pm.expect(json).to.be.an('array').that.is.not.empty;",
+                      "    json.forEach((product, i) => {",
+                      "        pm.expect(product.title, `product[${i}].title`).to.include(requestedTitle);",
+                      "    });",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  },
+                  "listen": "test"
+                }
+              ],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              },
+              "request": {
+                "method": "GET",
+                "header": [],
+                "body": {
+                  "mode": "raw",
+                  "raw": "",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/?title=Classic",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "products", ""],
+                  "query": [
+                    {
+                      "key": "title",
+                      "value": "Classic"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "ProductsBySpecificPrice",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "",
+                      "pm.test('Products match exact price', () => {",
+                      "    const exactPrice = Number(pm.request.url.query.get('price'));",
+                      "    pm.expect(json).to.be.an('array').that.is.not.empty;",
+                      "    json.forEach((product, i) => {",
+                      "        pm.expect(product.price).to.equal(exactPrice, `Product [${i}] does not match the exact price`)",
+                      "    })",
+                      "})"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/?price=35",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "products", ""],
+                  "query": [
+                    {
+                      "key": "price",
+                      "value": "111"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "ProductsByPriceRange",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const json = pm.response.json();",
+                      "",
+                      "pm.test('Prices in response match given price range', () => {",
+                      "    const minPrice = Number(pm.request.url.query.get('price_min'));",
+                      "    const maxPrice = Number(pm.request.url.query.get('price_max'));",
+                      "",
+                      "    pm.expect(json).to.be.an('array').that.is.not.empty;",
+                      "",
+                      "    json.forEach((product, i) => {",
+                      "        pm.expect(product.price).to.be.at.least(minPrice, `Product [${i}] price is less than minPrice`);",
+                      "        pm.expect(product.price).to.be.at.most(maxPrice, `Product [${i}] price is greater than maxPrice`);",
+                      "    });",
+                      "});",
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/?price_min=900&price_max=1000",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "products", ""],
+                  "query": [
+                    {
+                      "key": "price_min",
+                      "value": "900"
+                    },
+                    {
+                      "key": "price_max",
+                      "value": "1000"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [""]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {},
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "function checkProduct(product, label) {",
+                  "    pm.expect(product.id, `${label}.id`).to.be.a('number');",
+                  "    pm.expect(product.title, `${label}.title`).to.be.a('string').and.to.not.be.empty;",
+                  "    pm.expect(product.price, `${label}.price`).to.be.a('number').and.to.be.above(0);",
+                  "    pm.expect(product.description, `${label}.description`).to.be.a('string').and.to.not.be.empty;",
+                  "    pm.expect(product.category, `${label}.category`).to.be.an('object');",
+                  "    pm.expect(product.category.id, `${label}.category.id`).to.be.a('number');",
+                  "    pm.expect(product.category.name, `${label}.category.name`).to.be.a('string').and.to.not.be.empty;",
+                  "    pm.expect(product.images, `${label}.images`).to.be.an('array').that.has.length.at.least(1);",
+                  "}",
+                  "",
+                  "pm.test('Response matches product shape', () => {",
+                  "    const json = pm.response.json();",
+                  "    if (Array.isArray(json)) {",
+                  "        pm.expect(json).to.not.be.empty;",
+                  "        json.forEach((product, i) => checkProduct(product, `product[${i}]`));",
+                  "    } else {",
+                  "        checkProduct(json, 'product');",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Negative checks",
+          "item": [
+            {
+              "name": "ProductById - non-existent id",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test(\"Status code is 400 for non-existent id\", () => {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(\"Error response has a message\", () => {",
+                      "    const json = pm.response.json();",
+                      "    pm.expect(json).to.have.property(\"message\");",
+                      "    pm.expect(json.message).to.be.a(\"string\").and.to.not.be.empty;",
+                      "});"
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "requests": {}
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/999999",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "products", "999999"]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "ProductById - invalid id format",
+              "event": [
+                {
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Status code is 400 for invalid id format\", () => {",
+                      "    pm.response.to.have.status(400);",
+                      "});",
+                      "",
+                      "pm.test(\"Error response has a message\", () => {",
+                      "    const json = pm.response.json();",
+                      "    pm.expect(json).to.have.property(\"message\");",
+                      "    pm.expect(json.message).to.be.a(\"string\").and.to.not.be.empty;",
+                      "});"
+                    ]
+                  },
+                  "listen": "test"
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/products/abc",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["api", "v1", "products", "abc"]
+                }
+              },
+              "response": []
+            }
+          ]
+        }
+      ],
+      "auth": {
+        "type": "jwt",
+        "jwt": [
+          {
+            "key": "secret",
+            "value": "{{accessToken}}",
+            "type": "string"
+          },
+          {
+            "key": "algorithm",
+            "value": "HS256",
+            "type": "string"
+          },
+          {
+            "key": "isSecretBase64Encoded",
+            "value": false,
+            "type": "boolean"
+          },
+          {
+            "key": "payload",
+            "value": "{}",
+            "type": "string"
+          },
+          {
+            "key": "addTokenTo",
+            "value": "header",
+            "type": "string"
+          },
+          {
+            "key": "headerPrefix",
+            "value": "Bearer",
+            "type": "string"
+          },
+          {
+            "key": "queryParamKey",
+            "value": "token",
+            "type": "string"
+          },
+          {
+            "key": "header",
+            "value": "{}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [""]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [
+              "pm.test('Content-type has correct value', () => {",
+              "    pm.expect(pm.response.headers.get('Content-type')).to.include('application/json');",
+              "});",
+              "",
+              "pm.test('Response is not empty', () => {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json).to.not.be.empty;",
+              "});",
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "e2e",
+      "item": [
+        {
+          "name": "e2eCreateNewProduct",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "const uniqueSlug = `${Date.now()}`;",
+                  "pm.collectionVariables.set('productSlug', uniqueSlug);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "const expectedSlug = pm.collectionVariables.get('productSlug');",
+                  "",
+                  "pm.test('Created product matches sent data', () => {",
+                  "    pm.expect(json.id).to.be.a('number');",
+                  "    pm.expect(json.slug).to.eql('new-product-' + expectedSlug);",
+                  "    pm.expect(json.title).to.include(expectedSlug);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201 && typeof json.id === 'number') {",
+                  "    pm.collectionVariables.set('createdProductId', json.id);",
+                  "    pm.collectionVariables.set('originalDescription', json.description);",
+                  "} else {",
+                  "    pm.execution.setNextRequest(null) // не тягнемо валідні кроки на невалідних даних",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"New Product {{productSlug}}\",\n    \"slug\": \"{{productSlug}}\",\n    \"price\": 55,\n    \"description\": \"A description for the new product\",\n    \"categoryId\": 1,\n    \"images\": [\n        \"https://placehold.co/600x400\",\n        \"https://image-1.co/600x400\"\n    ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", ""]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "e2eNewProductById",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "",
+                  "pm.test('Id in response equals requestedId', () => {",
+                  "    const requestedId = Number(pm.request.url.path.at(-1));",
+                  "    pm.expect(json.id).to.eql(requestedId);",
+                  "})",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [""],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{createdProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{createdProductId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "e2eUpdateNewProduct",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "const requestBody = JSON.parse(pm.request.body.raw);",
+                  "",
+                  "pm.test(\"Updated fields match request body\", () => {",
+                  "    Object.keys(requestBody).forEach(key => {",
+                  "        pm.expect(json[key]).to.eql(requestBody[key]);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test(\"Description matches originalDescription\", () => {",
+                  "    const originalDescription = pm.collectionVariables.get(\"originalDescription\");",
+                  "    pm.expect(json.description).to.eql(originalDescription);",
+                  "});",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"title\": \"Updated Product Title {{productSlug}}\",\n    \"price\": 100,\n    \"images\": [\"https://placehold.co/600x400\"]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{createdProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{createdProductId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "e2eDeleteNewProduct",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response body is true\", () => {",
+                  "    pm.expect(pm.response.json()).to.equal(true);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{createdProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{createdProductId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "e2eDeletedProductNotFound",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 400 after deletion\", () => {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": ""
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/products/{{createdProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "products", "{{createdProductId}}"]
+            }
+          },
+          "response": []
+        }
+      ],
+      "auth": {
+        "type": "jwt",
+        "jwt": [
+          {
+            "key": "secret",
+            "value": "{{accessToken}}",
+            "type": "string"
+          },
+          {
+            "key": "algorithm",
+            "value": "HS256",
+            "type": "string"
+          },
+          {
+            "key": "isSecretBase64Encoded",
+            "value": false,
+            "type": "boolean"
+          },
+          {
+            "key": "payload",
+            "value": "{}",
+            "type": "string"
+          },
+          {
+            "key": "addTokenTo",
+            "value": "header",
+            "type": "string"
+          },
+          {
+            "key": "headerPrefix",
+            "value": "Bearer",
+            "type": "string"
+          },
+          {
+            "key": "queryParamKey",
+            "value": "token",
+            "type": "string"
+          },
+          {
+            "key": "header",
+            "value": "{}",
+            "type": "string"
+          }
+        ]
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {},
+            "exec": [""]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "requests": {},
+            "exec": [
+              "const contentType = pm.response.headers.get(\"Content-Type\");",
+              "",
+              "if (contentType && pm.request.method !== \"DELETE\") {",
+              "    pm.test(\"Content-Type is application/json\", () => {",
+              "        pm.expect(contentType).to.include(\"application/json\");",
+              "    });",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "jwt",
+    "jwt": [
+      {
+        "key": "algorithm",
+        "value": "HS256",
+        "type": "string"
+      },
+      {
+        "key": "isSecretBase64Encoded",
+        "value": false,
+        "type": "boolean"
+      },
+      {
+        "key": "payload",
+        "value": "{}",
+        "type": "string"
+      },
+      {
+        "key": "addTokenTo",
+        "value": "header",
+        "type": "string"
+      },
+      {
+        "key": "headerPrefix",
+        "value": "Bearer",
+        "type": "string"
+      },
+      {
+        "key": "queryParamKey",
+        "value": "token",
+        "type": "string"
+      },
+      {
+        "key": "header",
+        "value": "{}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [""]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [""]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "productSlug",
+      "value": ""
+    },
+    {
+      "key": "createdProductId",
+      "value": ""
+    },
+    {
+      "key": "originalDescription",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "baseUrl",
+      "value": "https://api.escuelajs.co"
+    }
+  ]
+}
