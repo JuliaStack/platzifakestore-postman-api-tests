@@ -1,0 +1,34 @@
+name: Run Newman tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  api-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'v26.0.0'
+
+      - name: Install Newman & Reporters
+        run: |
+          npm install -g newman
+          npm install -g newman-reporter-htmlextra
+
+      - name: Run Newman API Tests
+        run: |
+          newman run tests/platziFakeStore.postman.json -r htmlextra
+
+      - name: Upload Test Report Artifact
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: newman-report
+          path: newman/
+          retention-days: 30
